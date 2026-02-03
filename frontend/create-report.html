@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Nuevo Parte</title>
+</head>
+
+<body>
+
+    <h1>Nuevo Parte de Trabajo</h1>
+
+    <form id="reportForm">
+        <label>Ubicación:</label><br>
+        <input type="text" id="location" required><br><br>
+
+        <label>Descripción:</label><br>
+        <textarea id="description" required></textarea><br><br>
+
+        <label>Fotos:</label><br>
+        <input type="file" id="photos" multiple accept="image/*"><br><br>
+
+        <button type="submit">Enviar parte</button>
+    </form>
+
+    <p id="status"></p>
+
+    <script src="create-report.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,53 @@
+const API_BASE_URL = "http://localhost:8000";
+
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Activar cuenta · PoolForYou</title>
+</head>
+
+<body>
+
+    <h2>Activa tu cuenta</h2>
+
+    <input id="password" type="password" placeholder="Nueva contraseña" />
+    <br><br>
+    <button onclick="activate()">Activar cuenta</button>
+
+    <p id="msg"></p>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+
+        async function activate() {
+            const password = document.getElementById("password").value;
+            const msg = document.getElementById("msg");
+
+            if (!password || password.length < 6) {
+                msg.innerText = "La contraseña debe tener al menos 6 caracteres";
+                return;
+            }
+
+            const res = await fetch(
+                `http://127.0.0.1:8000/activate?token=${token}&password=${encodeURIComponent(password)}`,
+                { method: "POST" }
+            );
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                msg.innerText = data.detail || "Error activando la cuenta";
+                return;
+            }
+
+            msg.innerText = "✅ Cuenta activada. Ya puedes iniciar sesión.";
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <h1 id="title"></h1>
+    <p id="subtitle"></p>
+
+
+</head>
+
+<body>
+
+    <h1>Dashboard PoolForYou</h1>
+
+    <h3 id="role"></h3>
+
+    <div id="buttons"></div>
+
+    <button onclick="exportCSV()">Exportar CSV</button>
+
+
+    <div id="filters" style="margin: 10px 0;"></div>
+
+    <hr>
+
+    <div id="feedback"></div>
+
+    <div id="content"></div>
+
+    <br>
+    <button onclick="logout()">Salir</button>
+
+    <script src="dashboard.js"></script>
+
+    <!-- MODAL DETALLE PARTE -->
+    <!-- MODAL DETALLE PARTE -->
+    <div id="modal" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+    z-index:9999;
+">
+        <div style="
+        background:#fff;
+        margin:40px auto;
+        width:80%;
+        max-width:700px;
+        border-radius:8px;
+        position:relative;
+        max-height:calc(100vh - 80px);
+        display:flex;
+        flex-direction:column;
+    ">
+            <button onclick="closeModal()" style="
+            position:absolute;
+            top:10px;
+            right:10px;
+            z-index:10;
+        ">❌</button>
+
+            <!-- 🔥 CONTENEDOR SCROLLABLE REAL -->
+            <div id="modalContent" style="
+            padding:20px;
+            overflow-y:auto;
+        "></div>
+        </div>
+    </div>
+
+</body>
+
+</html>
