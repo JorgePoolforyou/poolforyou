@@ -1,7 +1,5 @@
 print("🚀 MAIN.PY CARGADO")
 
-from fastapi.middleware.cors import CORSMiddleware
-
 app = FastAPI(title="PoolForYou API")
 
 app.add_middleware(
@@ -9,10 +7,11 @@ app.add_middleware(
     allow_origins=[
         "https://poolforyou-frontend.onrender.com"
     ],
-    allow_credentials=False,   # 🔴 CLAVE
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 import os
@@ -134,12 +133,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Depends, HTTPException
 
 @app.post("/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends()
-):
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(
-        email=form_data.username,
-        password=form_data.password
+        form_data.username,
+        form_data.password
     )
 
     if not user:
