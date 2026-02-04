@@ -135,22 +135,23 @@ async def create_user(
 # =====================
 # LOGIN
 # =====================
-from app.schemas import LoginRequest
-from app.security import authenticate_user, create_access_token
-from app.db import get_db
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Depends, HTTPException
 
 @app.post("/login")
 def login(
-    payload: LoginRequest,
-    db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends()
 ):
-    user = authenticate_user(db, payload.email, payload.password)
+    user = authenticate_user(
+        email=form_data.username,
+        password=form_data.password
+    )
 
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     if not user.email_verified:
-        raise HTTPException(status_code=403, detail="Email no verificado")
+        raise HTTPException(status_code=403, detail="Email not verified")
 
     token = create_access_token(
         {"sub": user.email, "role": user.role}
@@ -160,6 +161,7 @@ def login(
         "access_token": token,
         "token_type": "bearer"
     }
+
 
 
 
