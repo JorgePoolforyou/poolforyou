@@ -15,7 +15,7 @@ from fastapi import (
     UploadFile,
     File,
 )
-from fastapi.middleware.cors import CORSMiddleware
+
 from fastapi.staticfiles import StaticFiles
 
 from sqlalchemy.orm import Session
@@ -46,15 +46,21 @@ app = FastAPI(title="PoolForYou API")
 # =====================
 # CORS (CLAVE)
 # =====================
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="PoolForYou API")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5500",
+        "https://poolforyou-frontend.onrender.com"
     ],
-    allow_credentials=False,   # 🔴 CLAVE
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 # =====================
