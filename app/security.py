@@ -2,9 +2,8 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
+from sqlalchemy.orm import Session
 
 from app.models import User
 from app.settings import (
@@ -13,7 +12,7 @@ from app.settings import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     EMAIL_TOKEN_EXPIRE_MINUTES,
 )
-from app.db import get_db
+from app.db import SessionLocal
 
 # =====================
 # PASSWORDS
@@ -28,18 +27,18 @@ def verify_password(password: str, hashed: str) -> bool:
 
 # =====================
 # AUTHENTICATION
-
-def authenticate_user(
-    db: Session,
-    email: str,
-    password: str
-) -> User | None:
-    user = db.query(User).filter(User.email == email).first()
-    if not user or not user.hashed_password:
-        return None
-    if not verify_password(password, user.hashed_password):
-        return None
-    return user
+# =====================
+def authenticate_user(email: str, password: str) -> User | None:
+    db: Session = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == email).first()
+        if not user or not user.hashed_password:
+            return None
+        if not verify_password(password, user.hashed_password):
+            return None
+        return user
+    finally:
+        db.close()
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
@@ -56,7 +55,6 @@ security = HTTPBearer()
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
 ) -> User:
     token = credentials.credentials
 
@@ -68,11 +66,14 @@ def get_current_user(
     except JWTError:
         raise HTTPException(status_code=401)
 
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=401)
-
-    return user
+    db: Session = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            raise HTTPException(status_code=401)
+        return user
+    finally:
+        db.close()
 
 # =====================
 # ROLES
