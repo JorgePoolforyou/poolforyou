@@ -1,5 +1,19 @@
 print("🚀 MAIN.PY CARGADO")
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="PoolForYou API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://poolforyou-frontend.onrender.com"
+    ],
+    allow_credentials=False,   # 🔴 CLAVE
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 import os
 import uuid
@@ -40,26 +54,7 @@ from app.email_service import send_activation_email
 
 # =====================
 # APP
-# =====================
-app = FastAPI(title="PoolForYou API")
 
-# =====================
-# CORS (CLAVE)
-# =====================
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="PoolForYou API")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://poolforyou-frontend.onrender.com"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 
