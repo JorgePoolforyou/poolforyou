@@ -1,6 +1,7 @@
 const API_BASE_URL = "https://poolforyou-api.onrender.com";
 
 
+
 console.log("APP.JS CARGADO");
 
 function setError(msg) {
