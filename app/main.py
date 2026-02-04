@@ -130,20 +130,29 @@ async def create_user(
 # LOGIN
 # =====================
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends, HTTPException
 
 @app.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
+def login(
+    form: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
     user = authenticate_user(
-        form_data.username,
-        form_data.password
+        db,
+        form.username,
+        form.password
     )
 
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
 
     if not user.email_verified:
-        raise HTTPException(status_code=403, detail="Email not verified")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified"
+        )
 
     token = create_access_token(
         {"sub": user.email, "role": user.role}
