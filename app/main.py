@@ -37,7 +37,9 @@ app = FastAPI(title="PoolForYou API")
 # CORS (PRODUCCIÓN)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # en producción luego se puede cerrar
+    allow_origins=[
+        "https://poolforyou-frontend.onrender.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
