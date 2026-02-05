@@ -24,6 +24,10 @@ from app.settings import SECRET_KEY, ALGORITHM
 from jose import jwt, JWTError
 
 
+@app.get("/_debug")
+def debug():
+    return {"debug": "main.py is loaded"}
+
 # ======================================================
 # APP
 # ======================================================
