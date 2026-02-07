@@ -1,7 +1,5 @@
 const API_BASE_URL = "https://poolforyou-api.onrender.com";
 
-
-
 console.log("APP.JS CARGADO");
 
 function setError(msg) {
@@ -24,15 +22,17 @@ async function doLogin() {
     }
 
     try {
+        // 🔑 CAMBIO CLAVE: form-urlencoded (NO JSON)
+        const formData = new URLSearchParams();
+        formData.append("username", email); // FastAPI espera "username"
+        formData.append("password", password);
+
         const response = await fetch(`${API_BASE_URL}/login`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/x-www-form-urlencoded"
             },
-            body: JSON.stringify({
-                email: email,
-                password: password
-            })
+            body: formData.toString()
         });
 
         if (!response.ok) {
