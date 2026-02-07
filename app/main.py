@@ -1,3 +1,6 @@
+print("🔥🔥 ESTE MAIN.PY ESTA EN PRODUCCION 🔥🔥")
+
+
 from fastapi import FastAPI, Depends, HTTPException, status, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -9,7 +12,8 @@ from datetime import datetime, timedelta
 import os
 import uuid
 
-from app.db import Base, engine, get_db
+from app.db import get_db, Base, engine   # 👈 AÑADIDO Base y engine
+
 from app.models import User, WorkReport
 from app.schemas import UserCreate
 from app.security import (
@@ -20,16 +24,9 @@ from app.security import (
     verify_email_verification_token,
     hash_password,
 )
-from app.settings import SECRET_KEY, ALGORITHM
-from jose import jwt, JWTError
-
-
-@app.get("/_debug")
-def debug():
-    return {"debug": "main.py is loaded"}
 
 # ======================================================
-# APP
+# APP (tiene que ir ANTES de usar @app.get / @app.post)
 # ======================================================
 
 app = FastAPI(title="PoolForYou API")
@@ -47,6 +44,12 @@ app.add_middleware(
 
 # DB
 Base.metadata.create_all(bind=engine)
+
+# DEBUG (ahora sí, app existe)
+@app.get("/_debug")
+def debug():
+    return {"debug": "main.py is loaded"}
+
 
 
 # ======================================================
