@@ -30,7 +30,7 @@ from app.security import (
 app = FastAPI()
 
 # ======================================================
-# CORS (ANTES DE LAS RUTAS)
+# CORS
 # ======================================================
 
 app.add_middleware(
@@ -73,38 +73,19 @@ def login(
     db: Session = Depends(get_db),
 ):
     try:
-        user = authenticate_user(
-            db,
-            form.username,
-            form.password
-        )
-    except Exception as e:
-        # 🔴 IMPORTANTE: siempre devolver JSON
-        raise HTTPException(
-            status_code=500,
-            detail="Authentication error"
-        )
+        user = authenticate_user(db, form.username, form.password)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Authentication error")
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
-        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     if not user.email_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email not verified"
-        )
+        raise HTTPException(status_code=403, detail="Email not verified")
 
-    token = create_access_token(
-        {"sub": user.email, "role": user.role}
-    )
+    token = create_access_token({"sub": user.email, "role": user.role})
 
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    return {"access_token": token, "token_type": "bearer"}
 
 # ======================================================
 # USERS
@@ -129,16 +110,18 @@ def create_user(
     db.refresh(new_user)
 
     token = create_email_verification_token(new_user.email)
-    activation_link = f"https://poolforyou-frontend.onrender.com/activate.html?token={token}"
+    activation_link = (
+        f"https://poolforyou-frontend.onrender.com/activate.html?token={token}"
+    )
 
     print("ACTIVATION LINK:", activation_link)
 
     return {
-    "id": new_user.id,
-    "email": new_user.email,
-    "role": new_user.role,
-    "activation_link": activation_link
-}
+        "id": new_user.id,
+        "email": new_user.email,
+        "role": new_user.role,
+        "activation_link": activation_link,
+    }
 
 @app.get("/activate")
 def activate_account(
@@ -146,7 +129,6 @@ def activate_account(
     password: str = Query(...),
     db: Session = Depends(get_db),
 ):
-
     email = verify_email_verification_token(token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
@@ -201,10 +183,12 @@ def admin_work_reports(
     admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
-    return db.query(WorkReport).order_by(WorkReport.created_at.desc()).all()
+    return db.query(WorkReport).order_by(
+        WorkReport.created_at.desc()
+    ).all()
 
 # =========================
-# ADMIN – ACTUALIZAR ESTADO PARTE
+# ADMIN – ACTUALIZAR ESTADO
 # =========================
 @app.patch("/admin/work-reports/{report_id}")
 def update_work_report_status(
@@ -213,22 +197,62 @@ def update_work_report_status(
     admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
-    report = db.query(WorkReport).filter(WorkReport.id == report_id).first()
+    report = db.query(WorkReport).filter(
+        WorkReport.id == report_id
+    ).first()
+
     if not report:
         raise HTTPException(status_code=404, detail="Work report not found")
 
     report.status = status
     db.commit()
 
-    return {
-        "id": report.id,
-        "status": report.status
-    }
+    return {"id": report.id, "status": report.status}
 
 # ======================================================
-# FILES
+# FILES – SUBIDA DE FOTOS (🔥 CLAVE 🔥)
+# ======================================================
+
+@app.post("/work-reports/{report_id}/photos")
+async def upload_photos(
+    report_id: int,
+    files: List[UploadFile] = File(...),
+    user: User = Depends(require_role("technician", "lifeguard", "admin")),
+    db: Session = Depends(get_db),
+):
+    report = db.query(WorkReport).filter(
+        WorkReport.id == report_id
+    ).first()
+
+    if not report:
+        raise HTTPException(status_code=404, detail="Work report not found")
+
+    upload_dir = f"uploads/work_reports/{report_id}"
+    os.makedirs(upload_dir, exist_ok=True)
+
+    paths = []
+
+    for file in files:
+        ext = os.path.splitext(file.filename)[1]
+        name = f"{uuid.uuid4()}{ext}"
+        relative_path = f"{upload_dir}/{name}"
+
+        content = await file.read()   # 🔥 CLAVE
+        with open(relative_path, "wb") as f:
+            f.write(content)
+
+        paths.append(relative_path)
+
+    if not report.data:
+        report.data = {}
+
+    report.data.setdefault("photos", []).extend(paths)
+    db.commit()
+
+    return {"photos": paths}
+
+# ======================================================
+# STATIC FILES
 # ======================================================
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
-
