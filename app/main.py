@@ -134,10 +134,12 @@ def create_user(
     print("ACTIVATION LINK:", activation_link)
 
     return {
-        "id": new_user.id,
-        "email": new_user.email,
-        "role": new_user.role,
-    }
+    "id": new_user.id,
+    "email": new_user.email,
+    "role": new_user.role,
+    "activation_link": activation_link
+}
+
 @app.get("/activate")
 def activate_account(
     token: str = Query(...),
