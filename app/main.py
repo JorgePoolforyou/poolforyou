@@ -197,20 +197,4 @@ def my_reports(
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-@app.post("/_init-admin")
-def init_admin(db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == "admin@poolforyou.com").first()
-    if user:
-        return {"status": "exists"}
 
-    admin = User(
-        name="Admin",
-        email="admin@poolforyou.com",
-        role="admin",
-        hashed_password=hash_password("123456"),
-        email_verified=True,
-        is_active=True,
-    )
-    db.add(admin)
-    db.commit()
-    return {"status": "created"}
