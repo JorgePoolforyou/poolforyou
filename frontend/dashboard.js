@@ -129,7 +129,7 @@ async function updateStatus(id, status) {
 }
 
 /* =======================
-   RENDER
+   RENDER LISTADO
 ======================= */
 function renderReports(reports, isAdmin) {
     currentReports = reports;
@@ -147,6 +147,7 @@ function renderReports(reports, isAdmin) {
         div.style.border = "1px solid #ccc";
         div.style.margin = "10px";
         div.style.padding = "10px";
+        div.style.cursor = "pointer";
         div.onclick = () => openModal(r);
 
         div.innerHTML = `
@@ -169,6 +170,44 @@ function renderReports(reports, isAdmin) {
 
         content.appendChild(div);
     });
+}
+
+/* =======================
+   MODAL + FOTOS (🔥 CLAVE 🔥)
+======================= */
+function openModal(report) {
+    const modal = document.getElementById("modal");
+    const modalContent = document.getElementById("modalContent");
+
+    let photosHTML = "<p>No hay fotos</p>";
+
+    if (report.data?.photos?.length) {
+        photosHTML = report.data.photos.map(p => {
+            const cleanPath = p.replace(/^\/+/, "");
+            return `
+              <img 
+                src="${API_BASE_URL}/${cleanPath}" 
+                style="width:100%;margin-bottom:10px;border-radius:8px;"
+              >
+            `;
+        }).join("");
+    }
+
+    modalContent.innerHTML = `
+        <h2>Parte #${report.id}</h2>
+        <p><b>Ubicación:</b> ${report.location}</p>
+        <p><b>Descripción:</b> ${report.data?.description || "-"}</p>
+        <p><b>Estado:</b> ${report.status}</p>
+        <hr>
+        <h3>Fotos</h3>
+        ${photosHTML}
+    `;
+
+    modal.style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("modal").style.display = "none";
 }
 
 /* =======================
