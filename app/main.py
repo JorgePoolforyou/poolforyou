@@ -193,6 +193,16 @@ def my_reports(
         WorkReport.user_id == user.id
     ).all()
 
+# =========================
+# ADMIN – LISTAR TODOS LOS PARTES
+# =========================
+@app.get("/admin/work-reports")
+def admin_work_reports(
+    admin: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db),
+):
+    return db.query(WorkReport).order_by(WorkReport.created_at.desc()).all()
+
 # ======================================================
 # FILES
 # ======================================================
