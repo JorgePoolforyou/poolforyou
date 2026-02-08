@@ -138,13 +138,13 @@ def create_user(
         "email": new_user.email,
         "role": new_user.role,
     }
-
-@app.post("/activate")
+@app.get("/activate")
 def activate_account(
     token: str = Query(...),
     password: str = Query(...),
     db: Session = Depends(get_db),
 ):
+
     email = verify_email_verification_token(token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
