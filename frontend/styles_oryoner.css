@@ -1,0 +1,126 @@
+/* ===============================
+   BASE
+=============================== 
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(180deg, #eaf6f9 0%, #f4f6f8 100%);
+    color: #1f2d3d;
+    min-height: 100vh;
+}
+
+/* ===============================
+   HEADER
+=============================== */
+header {
+    background: linear-gradient(90deg, #0d6efd, #0bbcd6);
+    color: white;
+    padding: 20px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+header p {
+    margin: 6px 0 0;
+    opacity: 0.9;
+}
+
+/* ===============================
+   MAIN
+=============================== */
+main {
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* ===============================
+   CARDS
+=============================== */
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* ===============================
+   BOTONES
+=============================== */
+button {
+    background: linear-gradient(90deg, #0d6efd, #0bbcd6);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button.secondary {
+    background: #6c757d;
+}
+
+button.danger {
+    background: #dc3545;
+}
+
+/* ===============================
+   FORMULARIOS
+=============================== */
+input,
+textarea,
+select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 0.95rem;
+}
+
+/* ===============================
+   FOOTER FIRMA
+=============================== */
+.signature {
+    position: fixed;
+    bottom: 6px;
+    right: 10px;
+    font-size: 0.65rem;
+    /* 🔹 más pequeño */
+    font-style: italic;
+    /* 🔹 cursiva */
+    color: #b02a37;
+    /* 🔹 rojo elegante */
+    opacity: 0.7;
+    pointer-events: none;
+    /* 🔹 no molesta al clicar */
+    user-select: none;
+    /* 🔹 no seleccionable */
+    font-family: "Georgia", "Times New Roman", serif;
+    /* toque elegante */
+}
+
+
+/* ===============================
+   ROLES
+=============================== */
+body.admin header {
+    background: linear-gradient(90deg, #0d6efd, #084298);
+}
+
+body.tech header {
+    background: linear-gradient(90deg, #2ecc71, #1abc9c);
+}
