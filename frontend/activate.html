@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Activar cuenta</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,12 +59,6 @@
             color: #1b3a7a;
             display: block;
         }
-
-        code {
-            background: #eee;
-            padding: 2px 6px;
-            border-radius: 6px;
-        }
     </style>
 </head>
 
@@ -100,7 +95,14 @@
 
         function getTokenFromUrl() {
             const params = new URLSearchParams(window.location.search);
-            return params.get("token");
+            let token = params.get("token");
+
+            // 🔥 FIX CRÍTICO: elimina '=' extra si viene mal formado
+            if (token && token.startsWith("=")) {
+                token = token.substring(1);
+            }
+
+            return token;
         }
 
         async function activate() {
@@ -109,7 +111,7 @@
                 const password = document.getElementById("password").value;
 
                 if (!token) {
-                    showMsg("No hay token en la URL. Abre el enlace de activación correcto.", "error");
+                    showMsg("No hay token en la URL. Usa el enlace de activación correcto.", "error");
                     return;
                 }
 
@@ -120,36 +122,38 @@
 
                 showMsg("Activando cuenta...", "info");
 
-                // ✅ IMPORTANTE: tu backend ahora espera GET /activate?token=...&password=...
-                const url = `${API_BASE_URL}/activate?token=${encodeURIComponent(token)}&password=${encodeURIComponent(password)}`;
+                const url =
+                    `${API_BASE_URL}/activate` +
+                    `?token=${encodeURIComponent(token)}` +
+                    `&password=${encodeURIComponent(password)}`;
 
-                const res = await fetch(url, { method: "GET" });
-                const text = await res.text();
-
-                let data = null;
-                try { data = JSON.parse(text); } catch (_) { }
+                const res = await fetch(url); // GET por defecto
+                const data = await res.json();
 
                 if (!res.ok) {
-                    const detail = (data && data.detail) ? data.detail : text || `Error (${res.status})`;
-                    showMsg("Error al activar: " + detail, "error");
+                    showMsg(data.detail || "Error al activar la cuenta", "error");
                     return;
                 }
 
                 showMsg("✅ Cuenta activada correctamente. Ya puedes iniciar sesión.", "ok");
 
             } catch (err) {
-                console.error("ERROR ACTIVATION:", err);
-                showMsg("Error de red al activar (Failed to fetch). Revisa que la API esté LIVE.", "error");
+                console.error(err);
+                showMsg("Error de conexión con el servidor", "error");
             }
         }
 
-        // 🔥 Esto te garantiza que el botón SIEMPRE llama a la función
         document.addEventListener("DOMContentLoaded", () => {
             const token = getTokenFromUrl();
-            showPreInfo(token ? ("Token detectado en URL ✅") : ("Token NO detectado en URL ❌ (falta ?token=...)"));
+            showPreInfo(
+                token
+                    ? "Token detectado en URL ✅"
+                    : "Token NO detectado en URL ❌"
+            );
 
-            const btn = document.getElementById("btnActivate");
-            btn.addEventListener("click", activate);
+            document
+                .getElementById("btnActivate")
+                .addEventListener("click", activate);
         });
     </script>
 </body>
