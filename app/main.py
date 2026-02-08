@@ -203,6 +203,28 @@ def admin_work_reports(
 ):
     return db.query(WorkReport).order_by(WorkReport.created_at.desc()).all()
 
+# =========================
+# ADMIN – ACTUALIZAR ESTADO PARTE
+# =========================
+@app.patch("/admin/work-reports/{report_id}")
+def update_work_report_status(
+    report_id: int,
+    status: str = Query(...),
+    admin: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db),
+):
+    report = db.query(WorkReport).filter(WorkReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Work report not found")
+
+    report.status = status
+    db.commit()
+
+    return {
+        "id": report.id,
+        "status": report.status
+    }
+
 # ======================================================
 # FILES
 # ======================================================
