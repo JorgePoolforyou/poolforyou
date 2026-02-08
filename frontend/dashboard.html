@@ -3,38 +3,137 @@
 
 <head>
     <meta charset="UTF-8" />
-    <h1 id="title"></h1>
-    <p id="subtitle"></p>
+    <title>Dashboard | PoolForYou</title>
 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
 
+        header {
+            background: #0d6efd;
+            color: white;
+            padding: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .role {
+            font-weight: bold;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #0d6efd;
+            color: white;
+            font-weight: bold;
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #filters {
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        #content {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            min-height: 200px;
+        }
+
+        #feedback {
+            margin-top: 10px;
+        }
+
+        hr {
+            margin: 20px 0;
+        }
+    </style>
 </head>
 
 <body>
 
-    <h1>Dashboard PoolForYou</h1>
+    <header>
+        <h1>Dashboard PoolForYou</h1>
+        <p id="subtitle"></p>
+    </header>
 
-    <h3 id="role"></h3>
+    <main>
 
-    <div id="buttons"></div>
+        <div class="top-bar">
+            <div class="role" id="role"></div>
 
-    <button onclick="exportCSV()">Exportar CSV</button>
+            <!-- 🔥 BOTONES DE ACCIÓN (ADMIN / USER) -->
+            <div class="actions" id="buttons">
+                <!-- dashboard.js añadirá aquí botones dinámicos -->
 
+                <!-- ✅ UN SOLO BOTÓN EXPORT CSV -->
+                <button onclick="exportCSV()">Exportar CSV</button>
+            </div>
+        </div>
 
-    <div id="filters" style="margin: 10px 0;"></div>
+        <div id="filters"></div>
 
-    <hr>
+        <hr>
 
-    <div id="feedback"></div>
+        <div id="feedback"></div>
 
-    <div id="content"></div>
+        <div id="content"></div>
 
-    <br>
-    <button onclick="logout()">Salir</button>
+        <br>
+
+        <button class="danger" onclick="logout()">Salir</button>
+
+    </main>
 
     <script src="dashboard.js"></script>
 
-    <!-- MODAL DETALLE PARTE -->
-    <!-- MODAL DETALLE PARTE -->
+    <!-- ================= MODAL DETALLE PARTE ================= -->
     <div id="modal" style="
     display:none;
     position:fixed;
@@ -62,7 +161,6 @@
             z-index:10;
         ">❌</button>
 
-            <!-- 🔥 CONTENEDOR SCROLLABLE REAL -->
             <div id="modalContent" style="
             padding:20px;
             overflow-y:auto;

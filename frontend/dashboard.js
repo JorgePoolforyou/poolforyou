@@ -1,6 +1,5 @@
 const API_BASE_URL = "https://poolforyou-api.onrender.com";
 
-
 /* =======================
    UTILIDADES
 ======================= */
@@ -30,13 +29,6 @@ function cleanText(text) {
 /* =======================
    AUTH
 ======================= */
-const params = new URLSearchParams(window.location.search);
-const tokenFromUrl = params.get("token");
-if (tokenFromUrl) {
-    localStorage.setItem("token", tokenFromUrl);
-    window.history.replaceState({}, document.title, "dashboard.html");
-}
-
 const token = localStorage.getItem("token");
 if (!token) {
     alert("No estás autenticado");
@@ -52,21 +44,6 @@ let currentReports = [];
 ======================= */
 document.getElementById("role").innerText = "Rol: " + role;
 
-const titleEl = document.getElementById("title");
-const subtitleEl = document.getElementById("subtitle");
-
-if (titleEl && subtitleEl) {
-    if (role === "admin") {
-        titleEl.innerText = "Panel de Administración — PoolForYou";
-        subtitleEl.innerText = "Gestión global de partes y estados";
-        titleEl.style.color = "#c0392b";
-    } else {
-        titleEl.innerText = "Mis Partes — PoolForYou";
-        subtitleEl.innerText = "Crea y consulta tus partes de trabajo";
-        titleEl.style.color = "#2c3e50";
-    }
-}
-
 const buttonsDiv = document.getElementById("buttons");
 buttonsDiv.innerHTML = "";
 
@@ -80,7 +57,6 @@ if (role === "technician" || role === "lifeguard") {
 if (role === "admin") {
     buttonsDiv.innerHTML = `
         <button onclick="loadAdminReports()">Ver todos los partes</button>
-        <button onclick="exportCSV()">Exportar CSV</button>
     `;
 }
 
@@ -105,21 +81,7 @@ const commonFilters = `
   <input type="date" id="f_to">
 `;
 
-if (role === "admin") {
-    filtersDiv.innerHTML = `
-        ${commonFilters}
-        <label style="margin-left:10px;">Técnico (user_id):</label>
-        <input type="number" id="f_user" style="width:90px;" min="1">
-        <button onclick="applyAdminFilters()">Filtrar</button>
-        <button onclick="clearFilters()">Limpiar</button>
-    `;
-} else {
-    filtersDiv.innerHTML = `
-        ${commonFilters}
-        <button onclick="applyMyFilters()">Filtrar</button>
-        <button onclick="clearFilters()">Limpiar</button>
-    `;
-}
+filtersDiv.innerHTML = commonFilters;
 
 /* =======================
    NAVEGACIÓN
@@ -166,46 +128,47 @@ async function updateStatus(id, status) {
 ======================= */
 function renderReports(reports, isAdmin = false) {
     currentReports = reports;
+
     const content = document.getElementById("content");
     content.innerHTML = "";
 
-    if (!reports || reports.length === 0) {
+    if (!reports.length) {
         content.innerHTML = "<p>No hay partes</p>";
         return;
     }
 
-    reports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    reports
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .forEach(r => {
+            const div = document.createElement("div");
+            div.style.border = "1px solid #ccc";
+            div.style.margin = "10px";
+            div.style.padding = "10px";
+            div.style.cursor = "pointer";
+            div.onclick = () => openModal(r);
 
-    reports.forEach(r => {
-        const div = document.createElement("div");
-        div.style.border = "1px solid #ccc";
-        div.style.margin = "10px";
-        div.style.padding = "10px";
-        div.style.cursor = "pointer";
-        div.onclick = () => openModal(r);
-
-        div.innerHTML = `
-            <p><b>ID:</b> ${r.id}</p>
-            <p><b>Ubicación:</b> ${r.location}</p>
-            <p><b>Descripción:</b> ${r.data?.description || "-"}</p>
-            <p><b>Estado:</b>
-                <span style="background:${statusColor(r.status)};padding:4px 8px;">
-                    ${r.status}
-                </span>
-            </p>
-            <small>${new Date(r.created_at).toLocaleString()}</small>
-        `;
-
-        if (isAdmin) {
-            div.innerHTML += `
-                <br>
-                <button onclick="updateStatus(${r.id}, 'revisado')">Revisado</button>
-                <button onclick="updateStatus(${r.id}, 'cerrado')">Cerrado</button>
+            div.innerHTML = `
+                <p><b>ID:</b> ${r.id}</p>
+                <p><b>Ubicación:</b> ${r.location}</p>
+                <p><b>Descripción:</b> ${r.data?.description || "-"}</p>
+                <p><b>Estado:</b>
+                    <span style="background:${statusColor(r.status)};padding:4px 8px;">
+                        ${r.status}
+                    </span>
+                </p>
+                <small>${new Date(r.created_at).toLocaleString()}</small>
             `;
-        }
 
-        content.appendChild(div);
-    });
+            if (isAdmin) {
+                div.innerHTML += `
+                    <br>
+                    <button onclick="updateStatus(${r.id}, 'revisado')">Revisado</button>
+                    <button onclick="updateStatus(${r.id}, 'cerrado')">Cerrado</button>
+                `;
+            }
+
+            content.appendChild(div);
+        });
 }
 
 /* =======================
@@ -245,7 +208,10 @@ function closeModal() {
    CSV
 ======================= */
 function exportCSV() {
-    if (!currentReports.length) return alert("No hay datos");
+    if (!currentReports.length) {
+        alert("Primero carga los partes");
+        return;
+    }
 
     const headers = ["ID", "Ubicación", "Detalle", "Estado", "Usuario", "Fecha"];
     const rows = currentReports.map(r => [
