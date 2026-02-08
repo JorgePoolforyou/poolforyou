@@ -20,10 +20,7 @@ function parseJwt(token) {
 
 function cleanText(text) {
     if (!text) return "";
-    return String(text)
-        .replace(/;/g, ",")
-        .replace(/\r?\n/g, " ")
-        .trim();
+    return String(text).replace(/;/g, ",").replace(/\r?\n/g, " ").trim();
 }
 
 /* =======================
@@ -63,9 +60,7 @@ if (role === "admin") {
 /* =======================
    FILTROS
 ======================= */
-const filtersDiv = document.getElementById("filters");
-
-const commonFilters = `
+document.getElementById("filters").innerHTML = `
   <label>Estado:</label>
   <select id="f_status">
     <option value="">Todos</option>
@@ -73,15 +68,7 @@ const commonFilters = `
     <option value="revisado">Revisado</option>
     <option value="cerrado">Cerrado</option>
   </select>
-
-  <label style="margin-left:10px;">Desde:</label>
-  <input type="date" id="f_from">
-
-  <label style="margin-left:10px;">Hasta:</label>
-  <input type="date" id="f_to">
 `;
-
-filtersDiv.innerHTML = commonFilters;
 
 /* =======================
    NAVEGACIÓN
@@ -93,40 +80,58 @@ function goToCreate() {
 /* =======================
    FETCH DATA
 ======================= */
+async function fetchWithFallback(urls) {
+    for (const url of urls) {
+        const res = await fetch(url, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        if (res.ok) return res.json();
+    }
+    throw new Error("No se pudo cargar el endpoint admin");
+}
+
 async function loadMyReports() {
     const res = await fetch(`${API_BASE_URL}/my/work-reports`, {
         headers: { "Authorization": "Bearer " + token }
     });
     if (!res.ok) return alert("Error cargando tus partes");
-    const data = await res.json();
-    renderReports(data, false);
+    renderReports(await res.json(), false);
 }
 
 async function loadAdminReports() {
-    const res = await fetch(`${API_BASE_URL}/admin/work-reports`, {
-        headers: { "Authorization": "Bearer " + token }
-    });
-    if (!res.ok) return alert("Error cargando partes");
-    const data = await res.json();
-    renderReports(data, true);
+    try {
+        const data = await fetchWithFallback([
+            `${API_BASE_URL}/admin/work-reports`,
+            `${API_BASE_URL}/admin/work-reports/`
+        ]);
+        renderReports(data, true);
+    } catch (e) {
+        alert("No se pudieron cargar los partes (admin)");
+        console.error(e);
+    }
 }
 
 async function updateStatus(id, status) {
-    const res = await fetch(
-        `${API_BASE_URL}/admin/work-reports/${id}?status=${encodeURIComponent(status)}`,
-        {
+    const urls = [
+        `${API_BASE_URL}/admin/work-reports/${id}?status=${status}`,
+        `${API_BASE_URL}/admin/work-reports/${id}/?status=${status}`
+    ];
+
+    for (const url of urls) {
+        const res = await fetch(url, {
             method: "PATCH",
             headers: { "Authorization": "Bearer " + token }
-        }
-    );
-    if (!res.ok) return alert("Error actualizando estado");
-    await loadAdminReports();
+        });
+        if (res.ok) return loadAdminReports();
+    }
+
+    alert("Error actualizando estado");
 }
 
 /* =======================
    RENDER
 ======================= */
-function renderReports(reports, isAdmin = false) {
+function renderReports(reports, isAdmin) {
     currentReports = reports;
 
     const content = document.getElementById("content");
@@ -137,71 +142,33 @@ function renderReports(reports, isAdmin = false) {
         return;
     }
 
-    reports
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .forEach(r => {
-            const div = document.createElement("div");
-            div.style.border = "1px solid #ccc";
-            div.style.margin = "10px";
-            div.style.padding = "10px";
-            div.style.cursor = "pointer";
-            div.onclick = () => openModal(r);
+    reports.forEach(r => {
+        const div = document.createElement("div");
+        div.style.border = "1px solid #ccc";
+        div.style.margin = "10px";
+        div.style.padding = "10px";
+        div.onclick = () => openModal(r);
 
-            div.innerHTML = `
-                <p><b>ID:</b> ${r.id}</p>
-                <p><b>Ubicación:</b> ${r.location}</p>
-                <p><b>Descripción:</b> ${r.data?.description || "-"}</p>
-                <p><b>Estado:</b>
-                    <span style="background:${statusColor(r.status)};padding:4px 8px;">
-                        ${r.status}
-                    </span>
-                </p>
-                <small>${new Date(r.created_at).toLocaleString()}</small>
+        div.innerHTML = `
+            <p><b>ID:</b> ${r.id}</p>
+            <p><b>Ubicación:</b> ${r.location}</p>
+            <p><b>Descripción:</b> ${r.data?.description || "-"}</p>
+            <p><b>Estado:</b>
+              <span style="background:${statusColor(r.status)};padding:4px 8px;">
+                ${r.status}
+              </span>
+            </p>
+        `;
+
+        if (isAdmin) {
+            div.innerHTML += `
+              <button onclick="event.stopPropagation();updateStatus(${r.id},'revisado')">Revisado</button>
+              <button onclick="event.stopPropagation();updateStatus(${r.id},'cerrado')">Cerrado</button>
             `;
+        }
 
-            if (isAdmin) {
-                div.innerHTML += `
-                    <br>
-                    <button onclick="updateStatus(${r.id}, 'revisado')">Revisado</button>
-                    <button onclick="updateStatus(${r.id}, 'cerrado')">Cerrado</button>
-                `;
-            }
-
-            content.appendChild(div);
-        });
-}
-
-/* =======================
-   MODAL
-======================= */
-function openModal(report) {
-    const modal = document.getElementById("modal");
-    const content = document.getElementById("modalContent");
-
-    let photosHTML = "<p>No hay fotos</p>";
-    if (report.data?.photos?.length) {
-        photosHTML = report.data.photos.map(p => {
-            const cleanPath = p.replace(/\\/g, "/");
-            return `<img src="${API_BASE_URL}/${cleanPath}" style="width:100%;margin-bottom:10px;">`;
-        }).join("");
-    }
-
-    content.innerHTML = `
-        <h2>Parte #${report.id}</h2>
-        <p><b>Ubicación:</b> ${report.location}</p>
-        <p><b>Descripción:</b> ${report.data?.description || "-"}</p>
-        <p><b>Estado:</b> ${report.status}</p>
-        <p><b>Fecha:</b> ${new Date(report.created_at).toLocaleString()}</p>
-        <hr>
-        <h3>Fotos</h3>
-        ${photosHTML}
-    `;
-
-    modal.style.display = "block";
-}
-
-function closeModal() {
-    document.getElementById("modal").style.display = "none";
+        content.appendChild(div);
+    });
 }
 
 /* =======================
@@ -213,25 +180,23 @@ function exportCSV() {
         return;
     }
 
-    const headers = ["ID", "Ubicación", "Detalle", "Estado", "Usuario", "Fecha"];
-    const rows = currentReports.map(r => [
-        r.id,
-        cleanText(r.location),
-        cleanText(r.data?.description || ""),
-        r.status,
-        r.user_id,
-        new Date(r.created_at).toLocaleString("es-ES")
-    ]);
+    const rows = [
+        ["ID", "Ubicación", "Detalle", "Estado", "Usuario", "Fecha"],
+        ...currentReports.map(r => [
+            r.id,
+            cleanText(r.location),
+            cleanText(r.data?.description),
+            r.status,
+            r.user_id,
+            new Date(r.created_at).toLocaleString("es-ES")
+        ])
+    ];
 
-    const csv = [
-        headers.join(";"),
-        ...rows.map(r => r.join(";"))
-    ].join("\n");
-
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const csv = rows.map(r => r.join(";")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "poolforyou_partes.csv";
+    a.download = "partes.csv";
     a.click();
 }
 
