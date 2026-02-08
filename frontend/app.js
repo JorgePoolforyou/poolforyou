@@ -22,39 +22,57 @@ async function doLogin() {
     }
 
     try {
-        // 🔑 CAMBIO CLAVE: form-urlencoded (NO JSON)
+        // 🔑 FastAPI OAuth2PasswordRequestForm → form-urlencoded
         const formData = new URLSearchParams();
-        formData.append("username", email); // FastAPI espera "username"
+        formData.append("username", email);
         formData.append("password", password);
+
+        console.log("Intentando login contra:", `${API_BASE_URL}/login`);
 
         const response = await fetch(`${API_BASE_URL}/login`, {
             method: "POST",
+            mode: "cors",
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json"
             },
             body: formData.toString()
         });
 
+        // ❗ Aquí ya NO es problema de red, el servidor respondió
         if (!response.ok) {
-            const data = await response.json().catch(() => null);
-            setError(
-                data?.detail
-                    ? data.detail
-                    : `Error (${response.status}) al iniciar sesión`
-            );
+            let detail = `Error (${response.status}) al iniciar sesión`;
+
+            try {
+                const data = await response.json();
+                if (data?.detail) detail = data.detail;
+            } catch (_) {
+                // No era JSON (por ejemplo HTML de error)
+            }
+
+            setError(detail);
             return;
         }
 
         const data = await response.json();
 
+        if (!data.access_token) {
+            setError("Respuesta inválida del servidor");
+            return;
+        }
+
         // Guardar token
         localStorage.setItem("token", data.access_token);
 
-        // Redirigir al dashboard
+        // Redirigir
         window.location.href = "dashboard.html";
 
     } catch (err) {
-        console.error(err);
+        // 🔴 ESTE catch solo se ejecuta si:
+        // - el backend está caído
+        // - hay problema de CORS
+        // - hay problema de red
+        console.error("ERROR DE FETCH:", err);
         setError("No se puede conectar con el servidor");
     }
 }
