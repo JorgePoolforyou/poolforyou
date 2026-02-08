@@ -1,4 +1,21 @@
 print("🔥🔥 ESTE MAIN.PY ESTA EN PRODUCCION 🔥🔥")
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# ⬇️ CORS SIEMPRE JUSTO DESPUÉS DE FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://poolforyou-frontend.onrender.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 from fastapi import FastAPI, Depends, HTTPException, status, Query, UploadFile, File
@@ -29,22 +46,7 @@ from app.security import (
 # APP (tiene que ir ANTES de usar @app.get / @app.post)
 # ======================================================
 
-app = FastAPI(title="PoolForYou API")
 
-# CORS (PRODUCCIÓN)
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://poolforyou-frontend.onrender.com",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 # DB
