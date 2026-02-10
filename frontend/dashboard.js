@@ -184,16 +184,19 @@ function openModal(report) {
     if (report.data?.photos?.length) {
         photosHTML = report.data.photos.map(p => {
             const cleanPath = p.replace(/^\/+/, "");
-            return `
-              <img 
-                src="${API_BASE_URL}/${cleanPath}" 
-                style="width:100%;margin-bottom:10px;border-radius:8px;"
-              >
-            `;
-        }).join("");
-    }
+            const imgUrl = `${API_BASE_URL}/${cleanPath}`;
 
-    modalContent.innerHTML = `
+            return `
+        <img 
+            src="${imgUrl}"
+            alt="Foto del parte"
+            style="width:100%; margin-bottom:10px; border-radius:8px;"
+        >
+    `;
+        }).join("");
+
+
+        modalContent.innerHTML = `
         <h2>Parte #${report.id}</h2>
         <p><b>Ubicación:</b> ${report.location}</p>
         <p><b>Descripción:</b> ${report.data?.description || "-"}</p>
@@ -203,46 +206,46 @@ function openModal(report) {
         ${photosHTML}
     `;
 
-    modal.style.display = "block";
-}
-
-function closeModal() {
-    document.getElementById("modal").style.display = "none";
-}
-
-/* =======================
-   CSV
-======================= */
-function exportCSV() {
-    if (!currentReports.length) {
-        alert("Primero carga los partes");
-        return;
+        modal.style.display = "block";
     }
 
-    const rows = [
-        ["ID", "Ubicación", "Detalle", "Estado", "Usuario", "Fecha"],
-        ...currentReports.map(r => [
-            r.id,
-            cleanText(r.location),
-            cleanText(r.data?.description),
-            r.status,
-            r.user_id,
-            new Date(r.created_at).toLocaleString("es-ES")
-        ])
-    ];
+    function closeModal() {
+        document.getElementById("modal").style.display = "none";
+    }
 
-    const csv = rows.map(r => r.join(";")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "partes.csv";
-    a.click();
-}
+    /* =======================
+       CSV
+    ======================= */
+    function exportCSV() {
+        if (!currentReports.length) {
+            alert("Primero carga los partes");
+            return;
+        }
 
-/* =======================
-   LOGOUT
-======================= */
-function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "login.html";
-}
+        const rows = [
+            ["ID", "Ubicación", "Detalle", "Estado", "Usuario", "Fecha"],
+            ...currentReports.map(r => [
+                r.id,
+                cleanText(r.location),
+                cleanText(r.data?.description),
+                r.status,
+                r.user_id,
+                new Date(r.created_at).toLocaleString("es-ES")
+            ])
+        ];
+
+        const csv = rows.map(r => r.join(";")).join("\n");
+        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "partes.csv";
+        a.click();
+    }
+
+    /* =======================
+       LOGOUT
+    ======================= */
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+    }
