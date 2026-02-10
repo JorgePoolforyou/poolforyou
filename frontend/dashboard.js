@@ -249,3 +249,6 @@ function openModal(report) {
         localStorage.removeItem("token");
         window.location.href = "login.html";
     }
+    document.getElementById("exportBtn").onclick = exportCSV;
+    document.getElementById("logoutBtn").onclick = logout;
+}
