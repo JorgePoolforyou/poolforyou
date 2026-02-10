@@ -126,3 +126,45 @@ body.admin header {
 body.tech header {
     background: linear-gradient(90deg, #2ecc71, #1abc9c);
 }
+
+/* ===== MODAL SCROLLABLE ===== */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    z-index: 9999;
+}
+
+.modal-box {
+    background: #fff;
+    width: 90%;
+    max-width: 800px;
+    margin: 40px auto;
+    border-radius: 10px;
+    position: relative;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content-scroll {
+    padding: 20px;
+    overflow-y: auto;
+    /* 🔥 ESTO ES LO CLAVE */
+    max-height: calc(100vh - 160px);
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+}
