@@ -45,14 +45,14 @@ const buttonsDiv = document.getElementById("buttons");
 buttonsDiv.innerHTML = "";
 
 if (role === "technician" || role === "lifeguard") {
-    buttonsDiv.innerHTML = `
+    buttonsDiv.innerHTML += `
         <button onclick="goToCreate()">Nuevo parte</button>
         <button onclick="loadMyReports()">Mis partes</button>
     `;
 }
 
 if (role === "admin") {
-    buttonsDiv.innerHTML = `
+    buttonsDiv.innerHTML += `
         <button onclick="loadAdminReports()">Ver todos los partes</button>
     `;
 }
@@ -61,13 +61,24 @@ if (role === "admin") {
    FILTROS
 ======================= */
 document.getElementById("filters").innerHTML = `
-  <label>Estado:</label>
+  <label>ID:</label>
+  <input type="number" id="f_id" style="width:80px">
+
+  <label style="margin-left:10px;">Estado:</label>
   <select id="f_status">
     <option value="">Todos</option>
     <option value="pendiente">Pendiente</option>
     <option value="revisado">Revisado</option>
     <option value="cerrado">Cerrado</option>
   </select>
+
+  <label style="margin-left:10px;">Desde:</label>
+  <input type="date" id="f_from">
+
+  <label style="margin-left:10px;">Hasta:</label>
+  <input type="date" id="f_to">
+
+  <button style="margin-left:10px;" onclick="applyFilters()">Filtrar</button>
 `;
 
 /* =======================
@@ -78,62 +89,69 @@ function goToCreate() {
 }
 
 /* =======================
-   FETCH DATA
+   FETCH
 ======================= */
-async function fetchWithFallback(urls) {
-    for (const url of urls) {
-        const res = await fetch(url, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        if (res.ok) return res.json();
-    }
-    throw new Error("No se pudo cargar el endpoint admin");
-}
-
 async function loadMyReports() {
     const res = await fetch(`${API_BASE_URL}/my/work-reports`, {
         headers: { "Authorization": "Bearer " + token }
     });
     if (!res.ok) return alert("Error cargando tus partes");
-    renderReports(await res.json(), false);
+    currentReports = await res.json();
+    renderReports(currentReports, false);
 }
 
 async function loadAdminReports() {
-    try {
-        const data = await fetchWithFallback([
-            `${API_BASE_URL}/admin/work-reports`,
-            `${API_BASE_URL}/admin/work-reports/`
-        ]);
-        renderReports(data, true);
-    } catch (e) {
-        alert("No se pudieron cargar los partes (admin)");
-        console.error(e);
-    }
+    const res = await fetch(`${API_BASE_URL}/admin/work-reports`, {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    if (!res.ok) return alert("Error cargando partes");
+    currentReports = await res.json();
+    renderReports(currentReports, true);
 }
 
 async function updateStatus(id, status) {
-    const urls = [
+    const res = await fetch(
         `${API_BASE_URL}/admin/work-reports/${id}?status=${status}`,
-        `${API_BASE_URL}/admin/work-reports/${id}/?status=${status}`
-    ];
-
-    for (const url of urls) {
-        const res = await fetch(url, {
+        {
             method: "PATCH",
             headers: { "Authorization": "Bearer " + token }
-        });
-        if (res.ok) return loadAdminReports();
-    }
-
-    alert("Error actualizando estado");
+        }
+    );
+    if (!res.ok) return alert("Error actualizando estado");
+    loadAdminReports();
 }
 
 /* =======================
-   RENDER LISTADO
+   FILTROS LOGICA
+======================= */
+function applyFilters() {
+    let filtered = [...currentReports];
+
+    const fId = document.getElementById("f_id").value;
+    const fStatus = document.getElementById("f_status").value;
+    const fFrom = document.getElementById("f_from").value;
+    const fTo = document.getElementById("f_to").value;
+
+    if (fId) {
+        filtered = filtered.filter(r => r.id == fId);
+    }
+    if (fStatus) {
+        filtered = filtered.filter(r => r.status === fStatus);
+    }
+    if (fFrom) {
+        filtered = filtered.filter(r => new Date(r.created_at) >= new Date(fFrom));
+    }
+    if (fTo) {
+        filtered = filtered.filter(r => new Date(r.created_at) <= new Date(fTo + "T23:59:59"));
+    }
+
+    renderReports(filtered, role === "admin");
+}
+
+/* =======================
+   RENDER
 ======================= */
 function renderReports(reports, isAdmin) {
-    currentReports = reports;
-
     const content = document.getElementById("content");
     content.innerHTML = "";
 
@@ -144,16 +162,12 @@ function renderReports(reports, isAdmin) {
 
     reports.forEach(r => {
         const div = document.createElement("div");
-        div.style.border = "1px solid #ccc";
-        div.style.margin = "10px";
-        div.style.padding = "10px";
-        div.style.cursor = "pointer";
+        div.className = "card";
         div.onclick = () => openModal(r);
 
         div.innerHTML = `
             <p><b>ID:</b> ${r.id}</p>
             <p><b>Ubicación:</b> ${r.location}</p>
-            <p><b>Descripción:</b> ${r.data?.description || "-"}</p>
             <p><b>Estado:</b>
               <span style="background:${statusColor(r.status)};padding:4px 8px;">
                 ${r.status}
@@ -173,7 +187,7 @@ function renderReports(reports, isAdmin) {
 }
 
 /* =======================
-   MODAL + FOTOS (🔥 CLAVE 🔥)
+   MODAL
 ======================= */
 function openModal(report) {
     const modal = document.getElementById("modal");
@@ -183,20 +197,12 @@ function openModal(report) {
 
     if (report.data?.photos?.length) {
         photosHTML = report.data.photos.map(p => {
-            const cleanPath = p.replace(/^\/+/, "");
-            const imgUrl = `${API_BASE_URL}/${cleanPath}`;
-
-            return `
-        <img 
-            src="${imgUrl}"
-            alt="Foto del parte"
-            style="width:100%; margin-bottom:10px; border-radius:8px;"
-        >
-    `;
+            const imgUrl = `${API_BASE_URL}/${p.replace(/^\/+/, "")}`;
+            return `<img src="${imgUrl}" style="width:100%;margin-bottom:10px;border-radius:8px;">`;
         }).join("");
+    }
 
-
-        modalContent.innerHTML = `
+    modalContent.innerHTML = `
         <h2>Parte #${report.id}</h2>
         <p><b>Ubicación:</b> ${report.location}</p>
         <p><b>Descripción:</b> ${report.data?.description || "-"}</p>
@@ -206,49 +212,46 @@ function openModal(report) {
         ${photosHTML}
     `;
 
-        modal.style.display = "block";
+    modal.style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("modal").style.display = "none";
+}
+
+/* =======================
+   CSV
+======================= */
+function exportCSV() {
+    if (!currentReports.length) {
+        alert("Primero carga los partes");
+        return;
     }
 
-    function closeModal() {
-        document.getElementById("modal").style.display = "none";
-    }
+    const rows = [
+        ["ID", "Ubicación", "Detalle", "Estado", "Usuario", "Fecha"],
+        ...currentReports.map(r => [
+            r.id,
+            cleanText(r.location),
+            cleanText(r.data?.description),
+            r.status,
+            r.user_id,
+            new Date(r.created_at).toLocaleString("es-ES")
+        ])
+    ];
 
-    /* =======================
-       CSV
-    ======================= */
-    function exportCSV() {
-        if (!currentReports.length) {
-            alert("Primero carga los partes");
-            return;
-        }
+    const csv = rows.map(r => r.join(";")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "partes.csv";
+    a.click();
+}
 
-        const rows = [
-            ["ID", "Ubicación", "Detalle", "Estado", "Usuario", "Fecha"],
-            ...currentReports.map(r => [
-                r.id,
-                cleanText(r.location),
-                cleanText(r.data?.description),
-                r.status,
-                r.user_id,
-                new Date(r.created_at).toLocaleString("es-ES")
-            ])
-        ];
-
-        const csv = rows.map(r => r.join(";")).join("\n");
-        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "partes.csv";
-        a.click();
-    }
-
-    /* =======================
-       LOGOUT
-    ======================= */
-    function logout() {
-        localStorage.removeItem("token");
-        window.location.href = "login.html";
-    }
-    document.getElementById("exportBtn").onclick = exportCSV;
-    document.getElementById("logoutBtn").onclick = logout;
+/* =======================
+   LOGOUT
+======================= */
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "login.html";
 }
