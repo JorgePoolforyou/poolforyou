@@ -79,17 +79,16 @@ async function doLogin() {
 
 document.addEventListener("DOMContentLoaded", () => {
     const btn = document.getElementById("btnLogin");
-    if (!btn) {
-        console.error("NO EXISTE btnLogin");
-        return;
+    if (btn) {
+        btn.addEventListener("click", doLogin);
     }
 
-    btn.addEventListener("click", doLogin);
-
-    const passEl = document.getElementById("password");
-    if (passEl) {
-        passEl.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") doLogin();
+    const passwordInput = document.getElementById("password");
+    if (passwordInput) {
+        passwordInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                doLogin();
+            }
         });
     }
 });
